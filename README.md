@@ -132,15 +132,17 @@ flowchart LR
     User[User]
     
     %% Microservice Processes (Circles)
-    P1(("1.0<br/>Authentication Management<br/>(Node.js API)"))
-    P2(("2.0<br/>Transaction Processing<br/>(Node.js API)"))
-    P3(("3.0<br/>Goal Tracking<br/>(Node.js API)"))
-    P4(("4.0<br/>AI Insights & Analysis<br/>(Python ML)"))
+    P1(("1.0<br/>Authentication<br/>Management<br/>(Node.js API)"))
+    P2(("2.0<br/>Transaction<br/>Processing<br/>(Node.js API)"))
+    P3(("3.0<br/>Goal<br/>Tracking<br/>(Node.js API)"))
+    P4(("4.0<br/>AI Predictive<br/>Analytics<br/>(Python ML)"))
+    P5(("5.0<br/>Anomaly & Insight<br/>Alert Engine<br/>(Python ML)"))
     
     %% Data Stores
     D1[(D1: Users DB)]
     D2[(D2: Transactions DB)]
     D3[(D3: Goals DB)]
+    D4[(D4: Alert Logs DB)]
     
     %% Flows for Authentication
     User -- "Credentials" --> P1
@@ -160,18 +162,22 @@ flowchart LR
     P3 -- "Store Goal" --> D3
     D3 -. "Fetch Goals" .-> P3
     
-    %% Flows for AI Insights
-    User -- "Request Insights" --> P4
-    P4 -- "Predictive Reports & Insight Alerts" --> User
+    %% Flows for Analytics
+    User -- "Request Forecasts" --> P4
+    P4 -- "Predictive Reports" --> User
     D2 -. "Transaction History" .-> P4
-    D3 -. "Active Goals" .-> P4
+    
+    %% Flows for Alerts
+    D2 -. "New Transactions" .-> P5
+    P5 -- "Log Insight" --> D4
+    P5 -- "Trigger Insight Alert" --> User
 
     classDef process fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff;
     classDef datastore fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
     classDef entity fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#fff;
     
-    class P1,P2,P3,P4 process;
-    class D1,D2,D3 datastore;
+    class P1,P2,P3,P4,P5 process;
+    class D1,D2,D3,D4 datastore;
     class User entity;
 ```
 
