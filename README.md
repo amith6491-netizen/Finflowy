@@ -94,11 +94,11 @@ Provides a high-level view of the entire FinFlowy system and how it interacts wi
 
 ```mermaid
 flowchart TD
-    %% External Entities
-    User((User))
+    %% External Entities (Rectangles)
+    User[User]
     
-    %% Main System
-    System[<b>FinFlowy System</b><br/>Intelligent Personal Finance Tracker]
+    %% Main System Process (Circle)
+    System((0.0<br/>FinFlowy Microservices System))
 
     %% Data Flows
     User -- "User Credentials (Login/Register)" --> System
@@ -111,12 +111,12 @@ flowchart TD
     System -- "Goal Progress & Notifications" --> User
     
     User -- "Requests Insights" --> System
-    System -- "AI-Generated Predictive Analytics" --> User
+    System -- "AI-Generated Predictive Analytics & Insight Alerts" --> User
 
-    classDef system fill:#0f172a,stroke:#3b82f6,stroke-width:3px,color:#fff,rx:10px,ry:10px;
+    classDef process fill:#0f172a,stroke:#3b82f6,stroke-width:3px,color:#fff;
     classDef entity fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#fff;
     
-    class System system;
+    class System process;
     class User entity;
 ```
 
@@ -128,50 +128,41 @@ Breaks down the main system into distinct sub-processes and shows the flow of da
 
 ```mermaid
 flowchart LR
-    %% External Entity
-    User((User))
+    %% External Entity (Rectangle)
+    User[User]
     
-    %% Processes
-    P1(((1.0<br/>Authentication<br/>Management)))
-    P2(((2.0<br/>Transaction<br/>Processing)))
-    P3(((3.0<br/>Goal<br/>Tracking)))
-    P4(((4.0<br/>AI Insights &<br/>Predictive Analysis)))
+    %% Microservice Processes (Circles)
+    P1((1.0<br/>Frontend UI<br/>(React)))
+    P2((2.0<br/>Backend API<br/>(Node.js)))
+    P3((3.0<br/>ML Service<br/>(Python)))
     
     %% Data Stores
-    D1[(D1: Users DB)]
-    D2[(D2: Transactions DB)]
-    D3[(D3: Goals DB)]
+    D1[(D1: FinFlowy Database)]
     
-    %% Flows for Authentication
-    User -- "Credentials" --> P1
-    P1 -- "Auth Token" --> User
-    P1 -- "User Data" --> D1
-    D1 -. "Verification" .-> P1
+    %% Flows for Frontend
+    User -- "UI Interactions" --> P1
+    P1 -- "Rendered Dashboard & Alerts" --> User
     
-    %% Flows for Transactions
-    User -- "Input Transaction" --> P2
-    P2 -- "View Transactions" --> User
-    P2 -- "Store Record" --> D2
-    D2 -. "Fetch Records" .-> P2
+    %% Flows for Backend
+    P1 -- "REST API Calls<br/>(Auth, Transactions, Goals)" --> P2
+    P2 -- "JSON Responses" --> P1
     
-    %% Flows for Goals
-    User -- "Set/Update Goal" --> P3
-    P3 -- "Goal Progress" --> User
-    P3 -- "Store Goal" --> D3
-    D3 -. "Fetch Goals" .-> P3
+    %% Flows for ML
+    P1 -- "Request Insights" --> P2
+    P2 -- "Fetch User History" --> D1
+    D1 -. "Transaction/Goal Data" .-> P2
+    P2 -- "Forward History Payload" --> P3
+    P3 -- "Predictive Reports & Insight Alerts" --> P2
     
-    %% Flows for AI Insights
-    User -- "Request Insights" --> P4
-    P4 -- "Predictive Reports" --> User
-    D2 -. "Transaction History" .-> P4
-    D3 -. "Active Goals" .-> P4
+    %% Database connections
+    P2 -- "Store/Update Data" --> D1
 
     classDef process fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff;
     classDef datastore fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff;
     classDef entity fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#fff;
     
-    class P1,P2,P3,P4 process;
-    class D1,D2,D3 datastore;
+    class P1,P2,P3 process;
+    class D1 datastore;
     class User entity;
 ```
 
