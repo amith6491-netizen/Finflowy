@@ -192,39 +192,42 @@ flowchart LR
 Illustrates the logical sequence of operations and execution paths, focusing on the microservice routing between the Node.js API and the Python ML Service.
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor U as User
-    participant F as Frontend (React)
-    participant B as Backend API (Node.js)
-    participant ML as ML Service (Python)
-    participant DB as MongoDB
+flowchart TD
+    %% Premium Styling for Presentation
+    classDef central fill:#2d1b2e,stroke:#ec4899,stroke-width:4px,color:#fff,font-size:18px,font-weight:bold
+    classDef userbox fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#fff,font-size:16px
+    classDef dbbox fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff,font-size:16px
+    
+    %% Central Hub
+    SYS(("🤖 FINFLOWY AI<br/>SYSTEM 1.0")):::central
+    
+    %% External Entities (Top)
+    USER["👤 Client / Public User"]:::userbox
+    
+    %% Databases (Bottom)
+    DB_MAIN[("🗄️ Main FinFlowy Database")]:::dbbox
+    DB_ML[("🚨 ML Alert Logs Database")]:::dbbox
 
-    U->>F: Access Dashboard / Submit Action
-    
-    alt is Authentication Request
-        F->>B: POST /api/auth (Credentials)
-        B->>DB: Query User
-        DB-->>B: Return User Record
-        B-->>F: JWT Token & Profile
-    else is Standard Data Request (e.g., Add Transaction)
-        F->>B: POST /api/finance/transactions (JWT)
-        B->>B: Validate JWT & Payload
-        B->>DB: Insert Document
-        DB-->>B: Acknowledge
-        B-->>F: Success Response
-    else is ML Insight Request
-        F->>B: GET /api/finance/insights (JWT)
-        B->>DB: Fetch User History
-        DB-->>B: Return Transaction Data
-        B->>ML: POST /predict (Data Payload)
-        Note over B,ML: Microservice Communication
-        ML->>ML: Run Predictive Model
-        ML-->>B: Return AI Insights
-        B-->>F: Format & Send Insights
-    end
-    
-    F-->>U: Update UI State & Render Visuals
+    %% Inputs from User (Flowing Down to System)
+    USER -- "Register Account / Secure Login" --> SYS
+    USER -- "Input Income & Expenses" --> SYS
+    USER -- "Set Custom Financial Goals" --> SYS
+    USER -- "Request AI Predictive Insights" --> SYS
+
+    %% Outputs from System (Flowing Up to User)
+    SYS -- "Render Glassmorphism Dashboard" --> USER
+    SYS -- "Push Real-Time Anomaly Alerts" --> USER
+    SYS -- "Show Goal Progress & Forecasts" --> USER
+
+    %% System Storage Actions (Flowing Down to DB)
+    SYS -- "Store User Credentials & Hashes" --> DB_MAIN
+    SYS -- "Store Transaction Ledger" --> DB_MAIN
+    SYS -- "Update Active Goals" --> DB_MAIN
+    SYS -- "Log Detected Spending Anomalies" --> DB_ML
+
+    %% System Retrieval Actions (Flowing Up from DB)
+    DB_MAIN -- "Fetch Transaction History for ML" --> SYS
+    DB_ML -- "Retrieve Past Alert History" --> SYS
 ```
 
 ---
