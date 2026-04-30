@@ -98,7 +98,7 @@ flowchart TD
     User[User]
     
     %% Main System Process (Circle)
-    System((0.0<br/>FinFlowy Microservices System))
+    System(("0.0<br/>FinFlowy Microservices System"))
 
     %% Data Flows
     User -- "User Credentials (Login/Register)" --> System
@@ -132,9 +132,9 @@ flowchart LR
     User[User]
     
     %% Microservice Processes (Circles)
-    P1((1.0<br/>Frontend UI<br/>(React)))
-    P2((2.0<br/>Backend API<br/>(Node.js)))
-    P3((3.0<br/>ML Service<br/>(Python)))
+    P1(("1.0<br/>Frontend UI<br/>(React)"))
+    P2(("2.0<br/>Backend API<br/>(Node.js)"))
+    P3(("3.0<br/>ML Service<br/>(Python)"))
     
     %% Data Stores
     D1[(D1: FinFlowy Database)]
