@@ -224,6 +224,12 @@ flowchart TD
     P6[(Save to Main DB)]:::database
     P7[Update UI Balance]:::process
     
+    %% Action: Goal Tracking
+    P15[Input Financial Goal]:::process
+    D6{Is Goal Data<br/>Valid?}:::decision
+    P16[(Save Goal to Main DB)]:::database
+    P17[Update Goal Progress UI]:::process
+    
     %% Action: ML Insights
     P8[Request Predictive Insights]:::process
     P9[(Fetch Transaction History)]:::database
@@ -259,6 +265,14 @@ flowchart TD
     D4 -- Yes --> P6
     P6 --> P7
     P7 --> D3
+    
+    %% If User sets a Goal
+    D3 -- "Set Goal" --> P15
+    P15 --> D6
+    D6 -- No --> E2
+    D6 -- Yes --> P16
+    P16 --> P17
+    P17 --> D3
     
     %% If User requests ML Insights
     D3 -- "Analyze Data" --> P8
