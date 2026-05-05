@@ -257,15 +257,18 @@ export default function Insights() {
 
   useEffect(() => {
     setMlLoading(true)
-    setMlError(false)
+    // Each call already returns null on failure — Promise.all never rejects
     Promise.all([
       fetchExpenseForecast(),
       fetchSpendingPatterns(),
       fetchBudgetRecommendations(),
-    ])
-      .then(([f, p, b]) => { setForecast(f); setPatterns(p); setBudget(b) })
-      .catch(() => setMlError(true))
-      .finally(() => setMlLoading(false))
+    ]).then(([f, p, b]) => {
+      setForecast(f)
+      setPatterns(p)
+      setBudget(b)
+      // Only show error banner when every single call failed
+      if (!f && !p && !b) setMlError(true)
+    }).finally(() => setMlLoading(false))
   }, [])
 
   const warnings = insights.filter(i => i.type === 'warning')

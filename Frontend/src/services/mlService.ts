@@ -1,4 +1,21 @@
-import api from './api'
+import axios from 'axios'
+import { useAuthStore } from '../store/useAuthStore'
+
+// ── Dedicated silent axios instance for ML calls ──────────────────────────────
+// Does NOT use the global api.ts interceptor so a 401/500 from the ML service
+// never triggers an app-wide logout. Errors are caught locally in the component.
+const mlApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+// Attach JWT token if available — but swallow all errors silently
+mlApi.interceptors.request.use(config => {
+  const token = useAuthStore.getState().token
+  if (token && config.headers) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface ExpenseForecast {
@@ -31,10 +48,10 @@ export interface SpendingPatterns {
 export interface BudgetRec {
   category: string
   currentAvgMonthly: number
-  predictedNextMonth: number
+  predictedNextMonth?: number
   recommendedBudget: number
   potentialSaving: number
-  r2Score: number
+  r2Score?: number
   model: string
   confidence: string
 }
@@ -46,12 +63,18 @@ export interface BudgetRecommendation {
   summary: string
 }
 
-// ── API calls ─────────────────────────────────────────────────────────────────
-export const fetchExpenseForecast = (): Promise<ExpenseForecast> =>
-  api.get('/finance/insights/forecast').then(r => r.data)
+// ── API calls — each returns null on failure (never throws) ───────────────────
+export const fetchExpenseForecast = (): Promise<ExpenseForecast | null> =>
+  mlApi.get('/finance/insights/forecast')
+    .then(r => r.data)
+    .catch(() => null)
 
-export const fetchSpendingPatterns = (): Promise<SpendingPatterns> =>
-  api.get('/finance/insights/spending-patterns').then(r => r.data)
+export const fetchSpendingPatterns = (): Promise<SpendingPatterns | null> =>
+  mlApi.get('/finance/insights/spending-patterns')
+    .then(r => r.data)
+    .catch(() => null)
 
-export const fetchBudgetRecommendations = (): Promise<BudgetRecommendation> =>
-  api.get('/finance/insights/budget-recommendation').then(r => r.data)
+export const fetchBudgetRecommendations = (): Promise<BudgetRecommendation | null> =>
+  mlApi.get('/finance/insights/budget-recommendation')
+    .then(r => r.data)
+    .catch(() => null)
