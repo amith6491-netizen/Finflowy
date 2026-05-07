@@ -35,7 +35,7 @@
 
 Built on a **Database-per-Service microservice architecture**, FinFlowy separates every domain (auth, transactions, goals, ML) into isolated services, making it production-ready, scalable, and maintainable.
 
-| 🎯 Project Type | Final Year B.E. / B.Tech Project |
+| 🎯 Project Type | Infrastructure |
 |---|---|
 | 🏛️ Architecture | Microservices (Database-per-Service) |
 | 🧠 Intelligence | 5 Real scikit-learn ML Models |
