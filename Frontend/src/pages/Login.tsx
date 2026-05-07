@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { useAuthStore } from '@/store/useAuthStore'
-import { useFinanceStore } from '@/store/useFinanceStore'
 import toast from 'react-hot-toast'
 import axios from 'axios'
 
@@ -20,49 +19,6 @@ export default function Login() {
 
   const onSubmit = async (data: any) => {
     setIsLoading(true)
-
-    if (data.email === 'xyz@gmail.com' && data.password === '789456') {
-      login('mock-jwt-token-xyz', {
-        id: 'mock-id-xyz',
-        name: 'XYZ User',
-        email: 'xyz@gmail.com',
-        isAdmin: false
-      })
-      
-      const { addTransaction, clearData } = useFinanceStore.getState()
-      clearData()
-
-      const expenseCategories = ['Housing', 'Food', 'Transportation', 'Utilities', 'Insurance', 'Healthcare', 'Saving & Debts', 'Personal Spending', 'Entertainment']
-      const incomeCategories = ['Salary', 'Freelance', 'Investments', 'Gift', 'Other']
-      for (let i = 0; i < 115; i++) {
-        const isExpense = Math.random() > 0.3
-        const type = isExpense ? 'expense' : 'income'
-        const categories = isExpense ? expenseCategories : incomeCategories
-        const category = categories[Math.floor(Math.random() * categories.length)]
-        
-        let amount = Math.floor(Math.random() * 1990) + 10
-        if (type === 'income') amount = amount * 3
-        
-        const start = new Date(2026, 3, 1).getTime() // April 1, 2026
-        const end = new Date(2026, 4, 1).getTime() // May 1, 2026
-        const randomTime = start + Math.random() * (end - start)
-        const date = new Date(randomTime).toISOString().split('T')[0]
-        
-        addTransaction({
-          amount,
-          type,
-          category,
-          date,
-          description: `Auto-generated ${type} (${category}) ${i}`
-        })
-      }
-
-      toast.success('Successfully logged in and added 115 transactions!')
-      navigate('/')
-      setIsLoading(false)
-      return
-    }
-
     try {
       const res = await axios.post('/api/auth/login', {
         email: data.email,
@@ -74,10 +30,10 @@ export default function Login() {
         email: res.data.email,
         isAdmin: res.data.isAdmin
       })
-      toast.success('Successfully logged in')
+      toast.success('Welcome back, ' + res.data.name + '! 👋')
       navigate('/')
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Login failed')
+      toast.error(error.response?.data?.message || 'Login failed. Check your credentials.')
     } finally {
       setIsLoading(false)
     }

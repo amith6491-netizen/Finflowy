@@ -244,9 +244,10 @@ function ScoreBreakdown({ score }: { score: number }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Insights() {
-  const insights    = useFinanceStore(state => state.insights)
+  const insights     = useFinanceStore(state => state.insights)
   const transactions = useFinanceStore(state => state.transactions)
-  const healthScore = useMemo(() => calcHealthScore(transactions), [transactions])
+  const isLoading    = useFinanceStore(state => state.isLoading)
+  const healthScore  = useMemo(() => calcHealthScore(transactions), [transactions])
 
   // ML API state
   const [forecast,  setForecast]  = useState<ExpenseForecast | null>(null)
@@ -254,10 +255,13 @@ export default function Insights() {
   const [budget,    setBudget]    = useState<BudgetRecommendation | null>(null)
   const [mlLoading, setMlLoading] = useState(false)
   const [mlError,   setMlError]   = useState(false)
+  const [mlFetched, setMlFetched] = useState(false)
 
+  // Defer ML calls until transactions are actually loaded from backend
   useEffect(() => {
+    if (isLoading || mlFetched) return
+    setMlFetched(true)
     setMlLoading(true)
-    // Each call already returns null on failure — Promise.all never rejects
     Promise.all([
       fetchExpenseForecast(),
       fetchSpendingPatterns(),
@@ -266,10 +270,9 @@ export default function Insights() {
       setForecast(f)
       setPatterns(p)
       setBudget(b)
-      // Only show error banner when every single call failed
       if (!f && !p && !b) setMlError(true)
     }).finally(() => setMlLoading(false))
-  }, [])
+  }, [isLoading, mlFetched])
 
   const warnings = insights.filter(i => i.type === 'warning')
   const successes = insights.filter(i => i.type === 'success')
@@ -299,8 +302,30 @@ export default function Insights() {
     return 'Financial Insight'
   }
 
+  // Local analytics — always computed from store, no ML needed
+  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const savingsRate  = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0
+  const catMap: Record<string, number> = {}
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    catMap[t.category] = (catMap[t.category] || 0) + t.amount
+  })
+  const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
+  // Loading skeleton while transactions are being fetched from backend
+  if (isLoading) {
+    return (
+      <div className="space-y-4 pb-8">
+        <div className="h-8 w-48 rounded-xl bg-white/10 animate-pulse" />
+        <div className="h-4 w-72 rounded-lg bg-white/5 animate-pulse" />
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-28 rounded-2xl bg-white/5 animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
   return (
-    /* Outer wrapper: relative so sticky child is anchored to it */
     <div className="relative pb-8">
 
       {/* ── Sticky meter panel — top-right, always visible while scrolling ── */}
@@ -431,6 +456,59 @@ export default function Insights() {
         </div>
       )}
 
+      {/* ── Local Analytics — always visible, no ML needed ────────────────────── */}
+      <div className="mt-2 mb-6">
+        <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <Sparkles size={16} className="text-primary" />
+          Financial Summary
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          {[
+            { label: 'Total Income',  value: `₹${totalIncome.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,  color: '#22c55e' },
+            { label: 'Total Expense', value: `₹${totalExpense.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#ef4444' },
+            { label: 'Savings Rate',  value: `${savingsRate.toFixed(1)}%`, color: savingsRate >= 20 ? '#22c55e' : savingsRate > 0 ? '#eab308' : '#ef4444' },
+          ].map(s => (
+            <Card key={s.label} className="glass">
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
+                <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {topCats.length > 0 && (
+          <Card className="glass">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Spending Categories</p>
+              <div className="space-y-2">
+                {topCats.map(([cat, amt]) => (
+                  <div key={cat} className="flex items-center gap-3">
+                    <span className="text-sm text-foreground w-32 truncate font-medium">{cat}</span>
+                    <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400"
+                        style={{ width: `${Math.min((amt / totalExpense) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground w-20 text-right">
+                      ₹{amt.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({totalExpense > 0 ? ((amt/totalExpense)*100).toFixed(0) : 0}%)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        {transactions.length === 0 && (
+          <Card className="glass border border-dashed border-white/20">
+            <CardContent className="py-10 text-center">
+              <Sparkles size={32} className="mx-auto mb-3 text-primary opacity-40" />
+              <p className="text-sm text-muted-foreground">Add transactions to see your financial summary and AI insights.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
       {/* ── ML Model Panels ──────────────────────────────────────────────────── */}
       <div className="mt-2">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -449,10 +527,13 @@ export default function Insights() {
         )}
 
         {mlError && (
-          <Card className="glass border border-destructive/30">
-            <CardContent className="py-8 flex flex-col items-center gap-2 text-center">
-              <AlertTriangle size={28} className="text-destructive opacity-60" />
-              <p className="text-sm text-muted-foreground">ML service unavailable. Start Docker to enable live predictions.</p>
+          <Card className="glass border border-orange-500/30">
+            <CardContent className="py-6 flex flex-col items-center gap-2 text-center">
+              <Brain size={28} className="text-orange-400 opacity-70" />
+              <p className="text-sm font-semibold text-foreground">ML Microservice Offline</p>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Run <code className="bg-white/10 px-1.5 py-0.5 rounded text-primary">docker-compose up</code> to enable scikit-learn predictions, or start the ML service locally on port 5001.
+              </p>
             </CardContent>
           </Card>
         )}

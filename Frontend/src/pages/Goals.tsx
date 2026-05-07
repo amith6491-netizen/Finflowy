@@ -16,25 +16,27 @@ export default function Goals() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [newGoal, setNewGoal] = useState({ name: '', targetAmount: '', deadline: '', priorityWeight: '50' })
 
-  const handleCreateGoal = (e: React.FormEvent) => {
+  const handleCreateGoal = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newGoal.name || !newGoal.targetAmount || !newGoal.deadline || !newGoal.priorityWeight) {
       toast.error('Please fill all fields')
       return
     }
-    
-    addGoal({
-      name: newGoal.name,
-      targetAmount: Number(newGoal.targetAmount),
-      currentAmount: 0,
-      probability: 50, // Initial AI confidence baseline
-      deadline: newGoal.deadline,
-      priorityWeight: Number(newGoal.priorityWeight)
-    })
-    
-    toast.success('Goal created! AI tracking initiated.')
-    setIsModalOpen(false)
-    setNewGoal({ name: '', targetAmount: '', deadline: '', priorityWeight: '50' })
+    try {
+      await addGoal({
+        name: newGoal.name,
+        targetAmount: Number(newGoal.targetAmount),
+        currentAmount: 0,
+        probability: 50,
+        deadline: newGoal.deadline,
+        priorityWeight: Number(newGoal.priorityWeight)
+      })
+      toast.success('Goal created! AI tracking initiated.')
+      setIsModalOpen(false)
+      setNewGoal({ name: '', targetAmount: '', deadline: '', priorityWeight: '50' })
+    } catch {
+      toast.error('Failed to save goal. Is the backend running?')
+    }
   }
 
   // Calculate global weight logic to display percentages visually to user

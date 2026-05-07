@@ -23,13 +23,17 @@ export default function Transactions() {
     }
   })
 
-  const onSubmit = (data: Omit<Transaction, 'id'>) => {
+  const onSubmit = async (data: Omit<Transaction, 'id'>) => {
     // Convert amount string back to number
     data.amount = Number(data.amount)
-    addTransaction(data)
-    toast.success('Transaction added successfully')
-    setIsModalOpen(false)
-    reset()
+    try {
+      await addTransaction(data)
+      toast.success('Transaction added successfully')
+      setIsModalOpen(false)
+      reset()
+    } catch {
+      toast.error('Failed to save transaction. Is the backend running?')
+    }
   }
 
   // Filter transactions
@@ -119,9 +123,13 @@ export default function Transactions() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button 
-                      onClick={() => {
-                        removeTransaction(tx.id)
-                        toast.success('Transaction deleted')
+                      onClick={async () => {
+                        try {
+                          await removeTransaction(tx.id)
+                          toast.success('Transaction deleted')
+                        } catch {
+                          toast.error('Failed to delete. Is the backend running?')
+                        }
                       }}
                       className="p-2 rounded-lg text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors"
                     >

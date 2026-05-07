@@ -2,7 +2,9 @@ import Transaction from '../models/Transaction.js';
 import Goal from '../models/Goal.js';
 import axios from 'axios';
 
-const ML_API_URL = process.env.ML_API_URL || 'http://ml-service:5001/api/ml';
+// In Docker: ML_API_URL=http://ml-service:5001/api/ml (set in docker-compose)
+// In local dev: falls back to localhost:5001
+const ML_API_URL = process.env.ML_API_URL || 'http://localhost:5001/api/ml';
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 const getUserTransactions = async (userId) => {
@@ -34,6 +36,22 @@ export const createTransaction = async (req, res) => {
       description
     });
     res.status(201).json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete a transaction
+// @route   DELETE /api/finance/transactions/:id
+export const deleteTransaction = async (req, res) => {
+  try {
+    const transaction = await Transaction.findById(req.params.id);
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+    if (transaction.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorised' });
+    }
+    await transaction.deleteOne();
+    res.json({ message: 'Transaction deleted' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,7 +1,8 @@
 import express from 'express';
 import { 
   getTransactions, 
-  createTransaction, 
+  createTransaction,
+  deleteTransaction,
   getGoals, 
   createGoal, 
   getFinancialInsights,
@@ -20,6 +21,9 @@ router.use(protect);
 router.route('/transactions')
   .get(getTransactions)
   .post(createTransaction);
+
+router.route('/transactions/:id')
+  .delete(deleteTransaction);
 
 router.route('/goals')
   .get(getGoals)

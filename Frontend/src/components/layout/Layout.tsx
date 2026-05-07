@@ -1,14 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Navigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import { useAuthStore } from '@/store/useAuthStore'
+import { useFinanceStore } from '@/store/useFinanceStore'
 
 export default function Layout() {
   const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const { loadTransactions, loadGoals } = useFinanceStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const location = useLocation()
+
+  // Load real data from backend as soon as the user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadTransactions()
+      loadGoals()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
-import { User, Shield, Bell, LogOut, CheckCircle2 } from 'lucide-react'
+import { User, LogOut, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Profile() {
@@ -106,59 +106,9 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card className="glass">
-            <CardHeader className="pb-4 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <Shield size={18} className="text-primary" />
-                <CardTitle>Security</CardTitle>
-              </div>
-              <CardDescription>Manage your password and security settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-               <div className="space-y-2">
-                  <Label>New Password</Label>
-                  <Input type="password" placeholder="••••••••" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Confirm Password</Label>
-                  <Input type="password" placeholder="••••••••" />
-                </div>
-                <Button variant="outline" className="mt-2 bg-white/5 border-white/10 hover:bg-white/10">
-                  Update Password
-                </Button>
-            </CardContent>
-          </Card>
 
-          <Card className="glass">
-             <CardHeader className="pb-4 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <Bell size={18} className="text-primary" />
-                <CardTitle>Preferences</CardTitle>
-              </div>
-              <CardDescription>Set your financial tracking boundaries.</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                 <div>
-                   <p className="font-semibold text-sm">AI Overspending Alerts</p>
-                   <p className="text-xs text-muted-foreground">Receive warnings if ML logic detects an anomaly.</p>
-                 </div>
-                 <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-                   <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-                 </div>
-               </div>
-               
-               <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
-                 <div>
-                   <p className="font-semibold text-sm">Weekly Report Emails</p>
-                   <p className="text-xs text-muted-foreground">Get a summarized breakdown of your finances.</p>
-                 </div>
-                 <div className="w-10 h-6 bg-white/20 rounded-full relative cursor-pointer">
-                   <div className="absolute left-1 top-1 w-4 h-4 bg-muted-foreground rounded-full" />
-                 </div>
-               </div>
-            </CardContent>
-          </Card>
+
+
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import api from '../services/api'
 
 export interface Transaction {
   id: string
@@ -14,9 +15,9 @@ export interface Goal {
   name: string
   targetAmount: number
   currentAmount: number
-  probability: number 
+  probability: number
   deadline: string
-  priorityWeight: number // Determines how income is distributed
+  priorityWeight: number
 }
 
 interface Insight {
@@ -29,23 +30,55 @@ interface FinanceState {
   transactions: Transaction[]
   goals: Goal[]
   insights: Insight[]
-  addTransaction: (t: Omit<Transaction, 'id'>) => void
-  removeTransaction: (id: string) => void
-  addGoal: (g: Omit<Goal, 'id'>) => void
+  isLoading: boolean
+
+  // Data loading (calls backend)
+  loadTransactions: () => Promise<void>
+  loadGoals: () => Promise<void>
+
+  // CRUD — calls backend + updates local state
+  addTransaction: (t: Omit<Transaction, 'id'>) => Promise<void>
+  removeTransaction: (id: string) => Promise<void>
+  addGoal: (g: Omit<Goal, 'id'>) => Promise<void>
   removeGoal: (id: string) => void
+
   clearData: () => void
 }
 
-// ---- ML-style Insight Engine ----
+// ── Helper: map MongoDB _id → id ──────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTx(raw: any): Transaction {
+  return {
+    id: raw._id ?? raw.id ?? Math.random().toString(),
+    amount: raw.amount,
+    type: raw.type,
+    category: raw.category,
+    date: (raw.date ?? '').substring(0, 10),
+    description: raw.description ?? '',
+  }
+}
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapGoal(raw: any): Goal {
+  return {
+    id: raw._id ?? raw.id ?? Math.random().toString(),
+    name: raw.name,
+    targetAmount: raw.targetAmount,
+    currentAmount: raw.currentAmount ?? 0,
+    probability: raw.probability ?? 50,
+    deadline: (raw.deadline ?? '').substring(0, 10),
+    priorityWeight: raw.priorityWeight ?? 1,
+  }
+}
+
+// ── ML-style client-side insight engine ──────────────────────────────────────
 function getMonthKey(dateStr: string): string {
-  return dateStr.substring(0, 7) // 'YYYY-MM'
+  return dateStr.substring(0, 7)
 }
 
 function generateInsights(allTransactions: Transaction[]): Insight[] {
   const newInsights: Insight[] = []
 
-  // Group expenses by month and category
   const monthCategoryMap: Record<string, Record<string, number>> = {}
   const monthIncomeMap: Record<string, number> = {}
   const monthExpenseMap: Record<string, number> = {}
@@ -69,20 +102,18 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
   const currentMonth = sortedMonths[sortedMonths.length - 1]
   const prevMonth = sortedMonths.length >= 2 ? sortedMonths[sortedMonths.length - 2] : null
 
-  // ---- Month-over-month category comparison ----
+  // Month-over-month category comparison
   if (currentMonth && prevMonth) {
     const currentCats = monthCategoryMap[currentMonth] || {}
     const prevCats = monthCategoryMap[prevMonth] || {}
-
     const allCats = new Set([...Object.keys(currentCats), ...Object.keys(prevCats)])
 
     allCats.forEach(cat => {
       const curr = currentCats[cat] || 0
       const prev = prevCats[cat] || 0
       if (prev === 0 || curr === 0) return
-
       const diff = curr - prev
-      const pct = ((diff / prev) * 100)
+      const pct = (diff / prev) * 100
 
       if (pct >= 20) {
         newInsights.push({
@@ -100,7 +131,7 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
     })
   }
 
-  // ---- Savings rate insight ----
+  // Savings rate insight
   if (currentMonth) {
     const inc = monthIncomeMap[currentMonth] || 0
     const exp = monthExpenseMap[currentMonth] || 0
@@ -121,7 +152,7 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
       }
     }
 
-    // ---- Top spending category alert ----
+    // Top spending category alert
     const cats = monthCategoryMap[currentMonth] || {}
     const topCat = Object.entries(cats).sort((a, b) => b[1] - a[1])[0]
     if (topCat && (monthExpenseMap[currentMonth] || 0) > 0) {
@@ -136,7 +167,7 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
     }
   }
 
-  // ---- Anomaly Detection (Z-score style) ----
+  // Anomaly Detection (Z-score style)
   const expenses = allTransactions.filter(t => t.type === 'expense')
   if (expenses.length >= 5) {
     const amounts = expenses.map(t => t.amount)
@@ -144,8 +175,7 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
     const std = Math.sqrt(amounts.map(x => (x - mean) ** 2).reduce((a, b) => a + b, 0) / amounts.length)
     const threshold = mean + 1.8 * std
 
-    const recent = expenses.slice(0, 3) // Check last few
-    recent.forEach(t => {
+    expenses.slice(0, 3).forEach(t => {
       if (t.amount > threshold) {
         newInsights.push({
           id: `anomaly-${t.id}`,
@@ -156,7 +186,7 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
     })
   }
 
-  // ---- Income milestone ----
+  // Income milestone
   const lastIncome = allTransactions.find(t => t.type === 'income')
   if (lastIncome && lastIncome.amount >= 10000) {
     newInsights.push({
@@ -175,59 +205,96 @@ function generateInsights(allTransactions: Transaction[]): Insight[] {
   }).slice(0, 10)
 }
 
-// -------
-
-export const useFinanceStore = create<FinanceState>((set) => ({
+// ── Store ─────────────────────────────────────────────────────────────────────
+export const useFinanceStore = create<FinanceState>((set, get) => ({
   transactions: [],
   goals: [],
   insights: [],
-  addTransaction: (t) => set((state) => {
-    const newTransaction = { ...t, id: Math.random().toString() }
-    const updatedTransactions = [newTransaction, ...state.transactions]
+  isLoading: false,
 
-    // Dynamic Mathematical Priority-Based Income Distribution
-    // We auto-allocate 15% of all incomes to the savings pool
-    let updatedGoals = [...state.goals]
-    if (t.type === 'income' && state.goals.length > 0) {
-      const globalSavingsPool = t.amount * 0.15 
-      const totalPriorityWeight = state.goals.reduce((acc, g) => acc + g.priorityWeight, 0)
-      
-      updatedGoals = state.goals.map(g => {
-        const allocatedShare = totalPriorityWeight > 0 ? (g.priorityWeight / totalPriorityWeight) * globalSavingsPool : 0
-        return {
+  // ── Load from backend ────────────────────────────────────────────────────
+  loadTransactions: async () => {
+    try {
+      set({ isLoading: true })
+      const { data } = await api.get('/finance/transactions')
+      const txs: Transaction[] = (data ?? []).map(mapTx)
+      set({ transactions: txs, insights: generateInsights(txs), isLoading: false })
+    } catch (err) {
+      console.error('loadTransactions error:', err)
+      set({ isLoading: false })
+    }
+  },
+
+  loadGoals: async () => {
+    try {
+      const { data } = await api.get('/finance/goals')
+      const goals: Goal[] = (data ?? []).map(mapGoal)
+      set({ goals })
+    } catch (err) {
+      console.error('loadGoals error:', err)
+    }
+  },
+
+  // ── CRUD ─────────────────────────────────────────────────────────────────
+  addTransaction: async (t) => {
+    try {
+      const { data } = await api.post('/finance/transactions', t)
+      const newTx = mapTx(data)
+      const txs = [newTx, ...get().transactions]
+
+      // Priority-based income allocation to goals
+      let updatedGoals = [...get().goals]
+      if (t.type === 'income' && updatedGoals.length > 0) {
+        const pool = t.amount * 0.15
+        const totalWeight = updatedGoals.reduce((acc, g) => acc + g.priorityWeight, 0)
+        updatedGoals = updatedGoals.map(g => ({
           ...g,
-          currentAmount: g.currentAmount + allocatedShare,
-          probability: Math.min(g.probability + 5, 100) 
-        }
-      })
-    } else if (t.type === 'expense') {
-       updatedGoals = state.goals.map(g => ({
+          currentAmount: g.currentAmount + (totalWeight > 0 ? (g.priorityWeight / totalWeight) * pool : 0),
+          probability: Math.min(g.probability + 5, 100),
+        }))
+      } else if (t.type === 'expense') {
+        updatedGoals = updatedGoals.map(g => ({
           ...g,
-          probability: Math.max(g.probability - 2, 0)
-       }))
-    }
+          probability: Math.max(g.probability - 2, 0),
+        }))
+      }
 
-    // Run ML-style insight engine on all transactions
-    const freshInsights = generateInsights(updatedTransactions)
+      set({ transactions: txs, insights: generateInsights(txs), goals: updatedGoals })
+    } catch (err) {
+      console.error('addTransaction error:', err)
+      throw err // re-throw so the UI can show a toast error
+    }
+  },
 
-    return { 
-      transactions: updatedTransactions,
-      insights: freshInsights,
-      goals: updatedGoals
+  removeTransaction: async (id) => {
+    // Optimistic update first — UI feels instant
+    const previous = get().transactions
+    const txs = previous.filter(t => t.id !== id)
+    set({ transactions: txs, insights: generateInsights(txs) })
+    try {
+      await api.delete(`/finance/transactions/${id}`)
+    } catch (err) {
+      // Rollback on failure
+      console.error('removeTransaction error:', err)
+      set({ transactions: previous, insights: generateInsights(previous) })
+      throw err
     }
-  }),
-  removeTransaction: (id) => set((state) => {
-    const updated = state.transactions.filter(t => t.id !== id)
-    return {
-      transactions: updated,
-      insights: generateInsights(updated)
+  },
+
+  addGoal: async (g) => {
+    try {
+      const { data } = await api.post('/finance/goals', g)
+      const newGoal = mapGoal(data)
+      set(state => ({ goals: [newGoal, ...state.goals] }))
+    } catch (err) {
+      console.error('addGoal error:', err)
+      throw err
     }
-  }),
-  addGoal: (g) => set((state) => ({
-    goals: [{ ...g, id: Math.random().toString() }, ...state.goals]
-  })),
-  removeGoal: (id) => set((state) => ({
+  },
+
+  removeGoal: (id) => set(state => ({
     goals: state.goals.filter(g => g.id !== id)
   })),
-  clearData: () => set({ transactions: [], goals: [], insights: [] })
+
+  clearData: () => set({ transactions: [], goals: [], insights: [] }),
 }))
