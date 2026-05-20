@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Sparkles, AlertTriangle, CheckCircle, Info, ShieldCheck, ShieldAlert, TrendingUp, Brain, Wallet, Layers } from 'lucide-react'
 import { fetchExpenseForecast, fetchSpendingPatterns, fetchBudgetRecommendations, type ExpenseForecast, type SpendingPatterns, type BudgetRecommendation } from '@/services/mlService'
 
-// â”€â”€ Health score formula â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Health score formula
 function calcHealthScore(
   transactions: ReturnType<typeof useFinanceStore.getState>['transactions']
 ): number {
@@ -41,7 +41,7 @@ function calcHealthScore(
   return Math.max(Math.round(Math.min(savingsPts + expPts + consistencyPts + activityPts, 100)), 0)
 }
 
-// â”€â”€ Color helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Color helpers
 function scoreColor(s: number) {
   if (s >= 75) return { hex: '#22c55e', label: 'Excellent', Icon: ShieldCheck }
   if (s >= 50) return { hex: '#eab308', label: 'Good',      Icon: TrendingUp  }
@@ -49,31 +49,19 @@ function scoreColor(s: number) {
   return           { hex: '#ef4444', label: 'At Risk',   Icon: ShieldAlert   }
 }
 
-// â”€â”€ Fully-filled gradient arc meter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-/**
- * Half-circle arc drawn on a 220Ã—130 viewBox.
- * Centre = (110, 115), radius = 100.
- *
- * The arc background is painted in 4 solid colour bands (no gaps).
- * A sharp needle animates from the left end to the correct angle on mount.
- */
+// Half-circle arc health meter
 function HealthMeter({ score }: { score: number }) {
-  // animated needle angle (degrees from SVG "east", CCW positive for SVG transform)
-  // Score 0   â†’ left  end of arc â†’ needle at -90Â° relative to centre
-  // Score 100 â†’ right end of arc â†’ needle at  90Â° relative to centre
   const [animatedScore, setAnimatedScore] = useState(0)
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
-    // Reset to 0 each time score changes, then animate forward
     setAnimatedScore(0)
     const start    = performance.now()
-    const duration = 1400 // ms
+    const duration = 1400
 
     const tick = (now: number) => {
       const elapsed  = now - start
       const progress = Math.min(elapsed / duration, 1)
-      // ease-out cubic
       const eased    = 1 - Math.pow(1 - progress, 3)
       setAnimatedScore(Math.round(eased * score))
       if (progress < 1) rafRef.current = requestAnimationFrame(tick)
@@ -85,27 +73,23 @@ function HealthMeter({ score }: { score: number }) {
 
   const { hex, label, Icon } = scoreColor(score)
 
-  // SVG geometry
   const cx = 110, cy = 115, R = 100
 
-  // Band boundaries as x positions along the arc (percentage of 180Â°)
-  // Zone breakpoints: 0, 20, 50, 75, 100  mapped to 0â€“180Â°
   const pctToXY = (pct: number) => {
-    const angle = Math.PI - (pct / 100) * Math.PI // 180Â° â†’ 0Â°
+    const angle = Math.PI - (pct / 100) * Math.PI
     return { x: cx + R * Math.cos(angle), y: cy - R * Math.sin(angle) }
   }
 
-  const p0  = pctToXY(0)   // 0
-  const p20 = pctToXY(20)  // red/orange boundary
-  const p50 = pctToXY(50)  // orange/yellow boundary
-  const p75 = pctToXY(75)  // yellow/green boundary
-  const p100= pctToXY(100) // 100
+  const p0   = pctToXY(0)
+  const p20  = pctToXY(20)
+  const p50  = pctToXY(50)
+  const p75  = pctToXY(75)
+  const p100 = pctToXY(100)
 
   const bandPath = (from: {x:number,y:number}, to: {x:number,y:number}) =>
     `M ${from.x} ${from.y} A ${R} ${R} 0 0 1 ${to.x} ${to.y}`
 
-  // Needle angle
-  const needleDeg = (animatedScore / 100) * 180  // 0 = left (180Â°), 180 = right (0Â°)
+  const needleDeg = (animatedScore / 100) * 180
   const needleRad = Math.PI - (needleDeg / 180) * Math.PI
   const needleLen = R - 14
   const needleTip = {
@@ -118,16 +102,11 @@ function HealthMeter({ score }: { score: number }) {
   return (
     <div className="flex flex-col items-center w-full">
       <svg viewBox="0 0 220 130" className="w-full max-w-[240px]" style={{ overflow: 'visible' }}>
-        {/* â”€â”€ Band 0â€“20: red â”€â”€ */}
         <path d={bandPath(p0, p20)}  fill="none" stroke="#ef4444" strokeWidth={strokeW} strokeLinecap="butt" />
-        {/* â”€â”€ Band 20â€“50: orange â”€â”€ */}
         <path d={bandPath(p20, p50)} fill="none" stroke="#f97316" strokeWidth={strokeW} strokeLinecap="butt" />
-        {/* â”€â”€ Band 50â€“75: yellow â”€â”€ */}
         <path d={bandPath(p50, p75)} fill="none" stroke="#eab308" strokeWidth={strokeW} strokeLinecap="butt" />
-        {/* â”€â”€ Band 75â€“100: green â”€â”€ */}
         <path d={bandPath(p75, p100)} fill="none" stroke="#22c55e" strokeWidth={strokeW} strokeLinecap="butt" />
 
-        {/* â”€â”€ Zone tick marks â”€â”€ */}
         {[20, 50, 75].map(pct => {
           const inner = pctToXY(pct)
           const angleRad = Math.PI - (pct / 100) * Math.PI
@@ -136,17 +115,11 @@ function HealthMeter({ score }: { score: number }) {
             y: cy - (R + 6) * Math.sin(angleRad),
           }
           return (
-            <line
-              key={pct}
-              x1={inner.x} y1={inner.y}
-              x2={outer.x} y2={outer.y}
-              stroke="rgba(0,0,0,0.7)"
-              strokeWidth={2.5}
-            />
+            <line key={pct} x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
+              stroke="rgba(0,0,0,0.7)" strokeWidth={2.5} />
           )
         })}
 
-        {/* â”€â”€ Score labels on arc â”€â”€ */}
         {[
           { pct: 0,   txt: '0'   },
           { pct: 20,  txt: '20'  },
@@ -157,43 +130,23 @@ function HealthMeter({ score }: { score: number }) {
           const angleRad = Math.PI - (pct / 100) * Math.PI
           const lR = R + 16
           return (
-            <text
-              key={pct}
+            <text key={pct}
               x={cx + lR * Math.cos(angleRad)}
               y={cy - lR * Math.sin(angleRad) + 4}
-              textAnchor="middle"
-              fontSize="9"
-              fill="rgba(255,255,255,0.45)"
-              fontFamily="inherit"
-            >
-              {txt}
-            </text>
+              textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.45)" fontFamily="inherit"
+            >{txt}</text>
           )
         })}
 
-        {/* â”€â”€ Needle shadow â”€â”€ */}
-        <line
-          x1={cx} y1={cy}
-          x2={needleTip.x + 1.5} y2={needleTip.y + 1.5}
-          stroke="rgba(0,0,0,0.35)"
-          strokeWidth={3.5}
-          strokeLinecap="round"
-        />
-        {/* â”€â”€ Needle â”€â”€ */}
-        <line
-          x1={cx} y1={cy}
-          x2={needleTip.x} y2={needleTip.y}
-          stroke="white"
-          strokeWidth={3}
-          strokeLinecap="round"
-        />
-        {/* â”€â”€ Pivot cap â”€â”€ */}
-        <circle cx={cx} cy={cy} r={9}  fill="#1e1e2e" />
-        <circle cx={cx} cy={cy} r={6}  fill={hex} />
+        <line x1={cx} y1={cy} x2={needleTip.x + 1.5} y2={needleTip.y + 1.5}
+          stroke="rgba(0,0,0,0.35)" strokeWidth={3.5} strokeLinecap="round" />
+        <line x1={cx} y1={cy} x2={needleTip.x} y2={needleTip.y}
+          stroke="white" strokeWidth={3} strokeLinecap="round" />
+        <circle cx={cx} cy={cy} r={9}   fill="#1e1e2e" />
+        <circle cx={cx} cy={cy} r={6}   fill={hex} />
         <circle cx={cx} cy={cy} r={2.5} fill="white" />
       </svg>
 
-      {/* â”€â”€ Score number & label â”€â”€ */}
       <div className="flex flex-col items-center mt-1 gap-1">
         <div className="flex items-baseline gap-1.5">
           <span className="text-5xl font-black leading-none" style={{ color: hex }}>
@@ -212,7 +165,7 @@ function HealthMeter({ score }: { score: number }) {
   )
 }
 
-// â”€â”€ Score breakdown bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Score breakdown bars
 function ScoreBreakdown({ score }: { score: number }) {
   const bars = [
     { label: 'Savings',         val: score >= 75 ? 'High' : score >= 50 ? 'Medium' : 'Low',    pct: Math.min(score * 1.2, 100) },
@@ -230,10 +183,7 @@ function ScoreBreakdown({ score }: { score: number }) {
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-1000"
-              style={{
-                width: `${b.pct}%`,
-                background: 'linear-gradient(90deg, #8b5cf6, #a855f7)',
-              }}
+              style={{ width: `${b.pct}%`, background: 'linear-gradient(90deg, #8b5cf6, #a855f7)' }}
             />
           </div>
         </div>
@@ -242,14 +192,13 @@ function ScoreBreakdown({ score }: { score: number }) {
   )
 }
 
-// â”€â”€ Main page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Main page
 export default function Insights() {
   const insights     = useFinanceStore(state => state.insights)
   const transactions = useFinanceStore(state => state.transactions)
   const isLoading    = useFinanceStore(state => state.isLoading)
   const healthScore  = useMemo(() => calcHealthScore(transactions), [transactions])
 
-  // ML API state
   const [forecast,  setForecast]  = useState<ExpenseForecast | null>(null)
   const [patterns,  setPatterns]  = useState<SpendingPatterns | null>(null)
   const [budget,    setBudget]    = useState<BudgetRecommendation | null>(null)
@@ -257,7 +206,6 @@ export default function Insights() {
   const [mlError,   setMlError]   = useState(false)
   const [mlFetched, setMlFetched] = useState(false)
 
-  // Defer ML calls until transactions are actually loaded from backend
   useEffect(() => {
     if (isLoading || mlFetched) return
     setMlFetched(true)
@@ -274,7 +222,7 @@ export default function Insights() {
     }).finally(() => setMlLoading(false))
   }, [isLoading, mlFetched])
 
-  const warnings = insights.filter(i => i.type === 'warning')
+  const warnings  = insights.filter(i => i.type === 'warning')
   const successes = insights.filter(i => i.type === 'success')
   const infos     = insights.filter(i => i.type === 'info')
 
@@ -289,20 +237,19 @@ export default function Insights() {
 
   const titleFor = (type: string, msg: string) => {
     if (type === 'warning') {
-      if (msg.includes('Anomaly'))          return 'Spending Anomaly Detected'
-      if (msg.includes('more than last'))   return 'Month-over-Month Spike'
+      if (msg.includes('Anomaly'))        return 'Spending Anomaly Detected'
+      if (msg.includes('more than last')) return 'Month-over-Month Spike'
       return 'Spending Alert'
     }
     if (type === 'success') {
-      if (msg.includes('savings rate'))     return 'Great Savings Rate!'
-      if (msg.includes('dropped'))          return 'Spending Reduced'
+      if (msg.includes('savings rate'))   return 'Great Savings Rate!'
+      if (msg.includes('dropped'))        return 'Spending Reduced'
       return 'Positive Achievement'
     }
-    if (msg.includes('ML'))                 return 'ML Pattern Analysis'
+    if (msg.includes('ML'))               return 'ML Pattern Analysis'
     return 'Financial Insight'
   }
 
-  // Local analytics â€” always computed from store, no ML needed
   const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const savingsRate  = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0
@@ -312,7 +259,8 @@ export default function Insights() {
   })
   const topCats = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 3)
 
-  // Loading skeleton while transactions are being fetched from backend
+  const fmt = (v: number) => `\u20b9${v.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+
   if (isLoading) {
     return (
       <div className="space-y-4 pb-8">
@@ -328,7 +276,7 @@ export default function Insights() {
   return (
     <div className="pb-8 space-y-6">
 
-      {/* â”€â”€ Page header â”€â”€ */}
+      {/* Page header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Smart Insights</h1>
         <p className="text-muted-foreground mt-1">
@@ -336,10 +284,10 @@ export default function Insights() {
         </p>
       </div>
 
-      {/* â”€â”€ Two-column grid: main content | health panel â”€â”€ */}
+      {/* Two-column grid */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 items-start">
 
-        {/* â•â• LEFT COLUMN â€” all content â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* LEFT COLUMN */}
         <div className="space-y-6 min-w-0">
 
           {/* Stat pills */}
@@ -349,10 +297,7 @@ export default function Insights() {
               { label: 'Wins',     count: successes.length, col: '#22c55e', Icon: CheckCircle  },
               { label: 'Analysis', count: infos.length,     col: '#8b5cf6', Icon: Info         },
             ].map(s => (
-              <div
-                key={s.label}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 glass"
-              >
+              <div key={s.label} className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 glass">
                 <s.Icon size={14} style={{ color: s.col }} />
                 <span className="text-sm font-bold" style={{ color: s.col }}>{s.count}</span>
                 <span className="text-xs text-muted-foreground">{s.label}</span>
@@ -371,14 +316,14 @@ export default function Insights() {
                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   Insights are generated by a rule-based ML engine that computes month-over-month category
                   comparisons (Food, Transport, Groceries, Entertainment, etc.), detects spending anomalies
-                  using Z-score analysis, and evaluates your financial health across 4 dimensions â€” all in
+                  using Z-score analysis, and evaluates your financial health across 4 dimensions — all in
                   real-time as you add transactions.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* â”€â”€ Alerts feed â”€â”€ */}
+          {/* Alerts feed */}
           <div>
             <h2 className="text-base font-bold mb-3 flex items-center gap-2">
               <Sparkles size={15} className="text-primary" />
@@ -422,7 +367,7 @@ export default function Insights() {
             )}
           </div>
 
-          {/* â”€â”€ Financial Summary â”€â”€ */}
+          {/* Financial Summary */}
           <div>
             <h2 className="text-base font-bold mb-3 flex items-center gap-2">
               <Sparkles size={15} className="text-primary" />
@@ -430,8 +375,8 @@ export default function Insights() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
               {[
-                { label: 'Total Income',  value: `â‚¹${totalIncome.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`,  color: '#22c55e' },
-                { label: 'Total Expense', value: `â‚¹${totalExpense.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`, color: '#ef4444' },
+                { label: 'Total Income',  value: fmt(totalIncome),  color: '#22c55e' },
+                { label: 'Total Expense', value: fmt(totalExpense), color: '#ef4444' },
                 { label: 'Savings Rate',  value: `${savingsRate.toFixed(1)}%`, color: savingsRate >= 20 ? '#22c55e' : savingsRate > 0 ? '#eab308' : '#ef4444' },
               ].map(s => (
                 <Card key={s.label} className="glass">
@@ -457,7 +402,7 @@ export default function Insights() {
                           />
                         </div>
                         <span className="text-xs text-muted-foreground w-24 text-right">
-                          â‚¹{amt.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({totalExpense > 0 ? ((amt/totalExpense)*100).toFixed(0) : 0}%)
+                          {fmt(amt)} ({totalExpense > 0 ? ((amt / totalExpense) * 100).toFixed(0) : 0}%)
                         </span>
                       </div>
                     ))}
@@ -475,7 +420,7 @@ export default function Insights() {
             )}
           </div>
 
-          {/* â”€â”€ ML Model Panels â”€â”€ */}
+          {/* ML Model Panels */}
           <div>
             <h2 className="text-base font-bold mb-3 flex items-center gap-2">
               <Brain size={16} className="text-primary" />
@@ -487,7 +432,7 @@ export default function Insights() {
               <Card className="glass">
                 <CardContent className="py-10 flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground">ML models runningâ€¦</p>
+                  <p className="text-sm text-muted-foreground">ML models running...</p>
                 </CardContent>
               </Card>
             )}
@@ -498,7 +443,7 @@ export default function Insights() {
                   <Brain size={28} className="text-orange-400 opacity-70" />
                   <p className="text-sm font-semibold text-foreground">ML Microservice Offline</p>
                   <p className="text-xs text-muted-foreground max-w-xs">
-                    Run <code className="bg-white/10 px-1.5 py-0.5 rounded text-primary">docker-compose up</code> to enable scikit-learn predictions, or start the ML service locally on port 5001.
+                    Run <code className="bg-white/10 px-1.5 py-0.5 rounded text-primary">docker-compose up</code> to enable scikit-learn predictions.
                   </p>
                 </CardContent>
               </Card>
@@ -513,7 +458,7 @@ export default function Insights() {
                         <div className="flex items-center gap-2">
                           <div className="p-2 rounded-xl bg-primary/20 text-primary"><TrendingUp size={16} /></div>
                           <div>
-                            <CardTitle className="text-sm">Expense Forecast â€” Next Month</CardTitle>
+                            <CardTitle className="text-sm">Expense Forecast — Next Month</CardTitle>
                             <CardDescription className="text-xs">{forecast.model}</CardDescription>
                           </div>
                         </div>
@@ -526,18 +471,18 @@ export default function Insights() {
                     <CardContent>
                       <div className="grid grid-cols-3 gap-4 mb-3">
                         <div className="text-center p-3 rounded-xl bg-white/5">
-                          <p className="text-2xl font-black text-primary">â‚¹{forecast.predictedExpense.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                          <p className="text-2xl font-black text-primary">{fmt(forecast.predictedExpense)}</p>
                           <p className="text-xs text-muted-foreground mt-1">Predicted Expense</p>
                         </div>
                         <div className="text-center p-3 rounded-xl bg-white/5">
                           <p className={`text-2xl font-black ${forecast.trend === 'increasing' ? 'text-destructive' : forecast.trend === 'decreasing' ? 'text-success' : 'text-primary'}`}>
-                            {forecast.trend === 'increasing' ? 'â†‘' : forecast.trend === 'decreasing' ? 'â†“' : 'â†’'}
+                            {forecast.trend === 'increasing' ? '\u2191' : forecast.trend === 'decreasing' ? '\u2193' : '\u2192'}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1 capitalize">{forecast.trend} trend</p>
                         </div>
                         <div className="text-center p-3 rounded-xl bg-white/5">
                           <p className="text-2xl font-black text-foreground">{(forecast.r2Score * 100).toFixed(0)}%</p>
-                          <p className="text-xs text-muted-foreground mt-1">Model RÂ² Fit</p>
+                          <p className="text-xs text-muted-foreground mt-1">Model R\u00b2 Fit</p>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">{forecast.message}</p>
@@ -565,14 +510,14 @@ export default function Insights() {
                             <div key={c.clusterId} className="p-3 rounded-xl border border-white/10 bg-white/5">
                               <div className="flex items-center justify-between mb-2">
                                 <span className="text-sm font-bold" style={{ color: col }}>{c.label}</span>
-                                <span className="text-xs text-muted-foreground">â‚¹{c.totalSpend.toLocaleString('en-IN', { maximumFractionDigits: 0 })} total</span>
+                                <span className="text-xs text-muted-foreground">{fmt(c.totalSpend)} total</span>
                               </div>
                               <div className="flex flex-wrap gap-1.5 mb-2">
                                 {c.categories.map(cat => (
                                   <span key={cat} className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-muted-foreground">{cat}</span>
                                 ))}
                               </div>
-                              <p className="text-xs text-muted-foreground">{c.transactionCount} transactions Â· avg â‚¹{c.avgTransaction.toLocaleString('en-IN', { maximumFractionDigits: 0 })} each</p>
+                              <p className="text-xs text-muted-foreground">{c.transactionCount} transactions · avg {fmt(c.avgTransaction)} each</p>
                             </div>
                           )
                         })}
@@ -595,7 +540,7 @@ export default function Insights() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                        <p className="text-sm font-semibold text-emerald-400">Potential Monthly Saving: â‚¹{budget.totalPotentialSaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                        <p className="text-sm font-semibold text-emerald-400">Potential Monthly Saving: {fmt(budget.totalPotentialSaving)}</p>
                         <p className="text-xs text-muted-foreground mt-1">{budget.summary}</p>
                       </div>
                       <div className="space-y-2">
@@ -604,11 +549,11 @@ export default function Insights() {
                             <div>
                               <p className="text-sm font-semibold">{r.category}</p>
                               <p className="text-xs text-muted-foreground">
-                                Avg: â‚¹{r.currentAvgMonthly.toLocaleString('en-IN', { maximumFractionDigits: 0 })} â†’ Budget: â‚¹{r.recommendedBudget.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                                Avg: {fmt(r.currentAvgMonthly)} &rarr; Budget: {fmt(r.recommendedBudget)}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold text-success">âˆ’â‚¹{r.potentialSaving.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                              <p className="text-sm font-bold text-success">-{fmt(r.potentialSaving)}</p>
                               <p className="text-xs text-muted-foreground capitalize">{r.confidence}</p>
                             </div>
                           </div>
@@ -622,7 +567,7 @@ export default function Insights() {
           </div>
         </div>
 
-        {/* â•â• RIGHT COLUMN â€” Financial Health panel â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+        {/* RIGHT COLUMN — Financial Health panel */}
         <div className="xl:sticky xl:top-6">
           <Card className="glass border border-white/10 shadow-2xl">
             <CardHeader className="pb-1 pt-4 px-4">
@@ -641,10 +586,10 @@ export default function Insights() {
               <ScoreBreakdown score={healthScore} />
               <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5">
                 {[
-                  { c: '#ef4444', t: '< 20 â€” At Risk'  },
-                  { c: '#f97316', t: '20â€“50 â€” Fair'    },
-                  { c: '#eab308', t: '50â€“75 â€” Good'    },
-                  { c: '#22c55e', t: '> 75 â€” Excellent'},
+                  { c: '#ef4444', t: '< 20 — At Risk'   },
+                  { c: '#f97316', t: '20-50 — Fair'      },
+                  { c: '#eab308', t: '50-75 — Good'      },
+                  { c: '#22c55e', t: '> 75 — Excellent'  },
                 ].map(z => (
                   <div key={z.t} className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-sm shrink-0" style={{ background: z.c }} />
@@ -660,4 +605,3 @@ export default function Insights() {
     </div>
   )
 }
-
