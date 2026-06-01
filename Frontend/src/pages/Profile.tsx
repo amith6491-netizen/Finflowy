@@ -38,7 +38,7 @@ export default function Profile() {
         {/* Left Column: Avatar & Quick Actions */}
         <div className="space-y-6">
           <Card className="glass overflow-hidden relative">
-            <div className="h-24 bg-gradient-to-r from-primary/40 to-purple-500/40" />
+            <div className="h-24 bg-linear-to-r from-primary/40 to-purple-500/40" />
             <CardContent className="px-6 pb-6 pt-16 flex flex-col items-center text-center relative">
               {/* Perfectly centered absolutely positioned avatar bridging the gap */}
               <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 rounded-full border-4 border-background bg-muted flex items-center justify-center shadow-xl overflow-hidden z-10 text-foreground">
@@ -49,11 +49,11 @@ export default function Profile() {
                 )}
               </div>
               <div className="w-full">
-                <h2 className="text-xl font-bold text-foreground break-words">{user?.name}</h2>
-                <p className="text-sm text-muted-foreground break-words">{user?.email}</p>
+                <h2 className="text-xl font-bold text-foreground wrap-break-word">{user?.name}</h2>
+                <p className="text-sm text-muted-foreground wrap-break-word">{user?.email}</p>
                 <div className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/20 text-success text-xs font-semibold">
                   <CheckCircle2 size={14} /> Account Verified
-                </div>
+                </div> 
               </div>
             </CardContent>
           </Card>

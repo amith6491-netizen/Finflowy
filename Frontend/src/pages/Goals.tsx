@@ -70,7 +70,7 @@ export default function Goals() {
                 layout
               >
                 <Card className="glass relative overflow-hidden group h-full">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-6">
@@ -124,7 +124,7 @@ export default function Goals() {
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 1, ease: 'easeOut' }}
-                      className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${
+                      className={`absolute top-0 left-0 h-full rounded-full bg-linear-to-r ${
                         progressPercentage >= 100 ? 'from-success to-emerald-400' : 'from-primary to-purple-400'
                       }`}
                     />
@@ -234,7 +234,7 @@ export default function Goals() {
                 <div className="mt-auto pt-6 border-t border-white/10">
                   <Button type="submit" className="w-full py-6 text-lg relative overflow-hidden group">
                     <span className="relative z-10">Initialize Tracker</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-purple-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-linear-to-r from-primary/50 to-purple-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </Button>
                 </div>
               </form>

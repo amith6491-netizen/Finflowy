@@ -13,7 +13,7 @@ function calcHealthScore(
   let inc = 0, exp = 0
   const monthMap: Record<string, { income: number; expense: number }> = {}
 
-  transactions.forEach(t => {
+  transactions.forEach((t) => {
     if (t.type === 'income') inc += t.amount
     else exp += t.amount
     const m = t.date.substring(0, 7)
@@ -101,7 +101,7 @@ function HealthMeter({ score }: { score: number }) {
 
   return (
     <div className="flex flex-col items-center w-full">
-      <svg viewBox="0 0 220 130" className="w-full max-w-[240px]" style={{ overflow: 'visible' }}>
+      <svg viewBox="0 0 220 130" className="w-full max-w-[240]" style={{ overflow: 'visible' }}>
         <path d={bandPath(p0, p20)}  fill="none" stroke="#ef4444" strokeWidth={strokeW} strokeLinecap="butt" />
         <path d={bandPath(p20, p50)} fill="none" stroke="#f97316" strokeWidth={strokeW} strokeLinecap="butt" />
         <path d={bandPath(p50, p75)} fill="none" stroke="#eab308" strokeWidth={strokeW} strokeLinecap="butt" />
@@ -397,7 +397,7 @@ export default function Insights() {
                         <span className="text-sm text-foreground w-32 truncate font-medium">{cat}</span>
                         <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-primary to-purple-400"
+                            className="h-full rounded-full bg-linear-to-r from-primary to-purple-400"
                             style={{ width: `${Math.min((amt / totalExpense) * 100, 100)}%` }}
                           />
                         </div>

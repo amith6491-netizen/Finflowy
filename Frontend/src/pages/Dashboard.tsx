@@ -132,7 +132,7 @@ export default function Dashboard() {
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {statsCards.map((stat, i) => (
           <Card key={i} className="hover:scale-[1.02] transition-transform duration-300 cursor-pointer group overflow-hidden relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -160,9 +160,9 @@ export default function Dashboard() {
             <CardTitle>Cash Flow Overview</CardTitle>
             <CardDescription>Monthly income vs expenses trend</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 min-h-[300px] pt-0">
+          <CardContent className="flex-1 min-h-75 pt-0">
             {noData ? (
-              <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <div className="h-[75] flex flex-col items-center justify-center gap-3 text-muted-foreground">
                 <Sparkles className="opacity-30" size={36} />
                 <p className="text-sm">Add transactions to see your cash flow chart</p>
               </div>
@@ -220,7 +220,7 @@ export default function Dashboard() {
             <CardTitle>Spending by Category</CardTitle>
             <CardDescription>Visual breakdown of your expenses</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col items-center justify-center min-h-[300px] pt-0">
+          <CardContent className="flex-1 flex flex-col items-center justify-center min-h-[75] pt-0">
             {pieData.length > 0 ? (
               <>
                 <ResponsiveContainer width="100%" height={240}>
@@ -256,7 +256,7 @@ export default function Dashboard() {
                 </div>
               </>
             ) : (
-              <div className="h-[300px] flex flex-col items-center justify-center gap-3 text-muted-foreground">
+              <div className="h-[75] flex flex-col items-center justify-center gap-3 text-muted-foreground">
                 <Sparkles className="opacity-30" size={36} />
                 <p className="text-sm">No expense data yet</p>
               </div>
